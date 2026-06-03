@@ -1,0 +1,137 @@
+﻿@{
+    ViewData["Title"] = "Real-Time Group Chat Control Center";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 rounded-4" style="background-color: #1a1a1a; color: #f5f5f5;">
+                <div class="card-header text-center py-4 border-secondary" style="background: linear-gradient(135deg, #0d6efd, #0dcaf0);">
+                    <h3 class="fw-bold m-0 text-white">💬 CodTech Real-Time Communications</h3>
+                    <small class="text-white-50">Enterprise WebSocket Signaling Channel</small>
+                </div>
+                <div class="card-body p-4">
+
+                    <div id="joinSection">
+                        <div class="mb-3">
+                            <label for="userInput" class="form-label fw-semibold text-info">Your Name / Identity</label>
+                            <input type="text" id="userInput" class="form-control bg-dark text-white border-secondary" placeholder="Enter your display name..." />
+                        </div>
+                        <div class="mb-4">
+                            <label for="roomInput" class="form-label fw-semibold text-info">Select Isolated Chat Channel</label>
+                            <select id="roomInput" class="form-select bg-dark text-white border-secondary">
+                                <option value="DotNet Developers Core">DotNet Developers Core</option>
+                                <option value="General Technical Chat">General Technical Chat</option>
+                                <option value="Project Collaboration Sync">Project Collaboration Sync</option>
+                            </select>
+                        </div>
+                        <button type="button" id="joinBtn" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">Initialize Channel Connection</button>
+                    </div>
+
+                    <div id="chatSection" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
+                            <h5 class="text-muted m-0">Channel Node: <span id="currentRoomTitle" class="text-info fw-bold"></span></h5>
+                            <span class="badge bg-success animate-pulse">📡 Online</span>
+                        </div>
+
+                        <div id="messagesList" class="border border-secondary rounded-3 p-3 mb-4" style="height: 350px; overflow-y: auto; background-color: #121212;"></div>
+
+                        <div class="input-group">
+                            <input type="text" id="messageInput" class="form-control bg-dark text-white border-secondary" placeholder="Type an encrypted message terminal payload..." />
+                            <button type="button" id="sendBtn" class="btn btn-info fw-bold text-dark px-4">Send System Broadcast</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-black text-center py-3 border-secondary small text-muted">
+                    CodTech Framework Suite Hub &copy; 2026 - Execution Verified by <strong>K Khushi Tiwari</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+<script>
+    // Build background configuration parameters matching the Server Routing mapped URL path endpoint
+    const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/chatHub")
+    .build();
+
+    let currentRoom = "";
+    let currentUsername = "";
+
+    // Triggered automatically whenever the backend signaling socket broadcasts a payload frame
+    connection.on("ReceiveMessage", function (user, message) {
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "mb-3 p-2.5 rounded-3 max-width-75 shadow-sm";
+
+    if (user === "System") {
+    // Apply neutral alerts design context rules
+    msgDiv.className = "mb-3 p-2 text-center text-warning bg-dark rounded border border-warning-subtle small font-monospace mx-auto w-75";
+    msgDiv.innerHTML = `⚠️ <strong>${message}</strong>`;
+    } else {
+    // Check message source coordinates to apply clear split messaging side blocks orientation
+    if (user === currentUsername) {
+    msgDiv.className = "mb-2 p-2 rounded-3 text-end ms-auto bg-primary text-white text-wrap border-0";
+    msgDiv.style.maxWidth = "70%";
+    msgDiv.innerHTML = `<small class="text-white-50 block d-block fw-bold mb-1">You</small>${message}`;
+    } else {
+    msgDiv.className = "mb-2 p-2 rounded-3 text-start me-auto bg-secondary text-white text-wrap border-0";
+    msgDiv.style.maxWidth = "70%";
+    msgDiv.innerHTML = `<small class="text-info block d-block fw-bold mb-1">${user}</small>${message}`;
+    }
+    }
+
+    const list = document.getElementById("messagesList");
+    list.appendChild(msgDiv);
+    list.scrollTop = list.scrollHeight; // Keeps content views sticky locked down to absolute latest items
+    });
+
+    // Execute Room Registration process workflow
+    document.getElementById("joinBtn").addEventListener("click", function () {
+    const user = document.getElementById("userInput").value.trim();
+    const room = document.getElementById("roomInput").value;
+
+    if (!user) {
+    alert("Identification identity string value is required to execute login.");
+    return;
+    }
+
+    currentUsername = user;
+    currentRoom = room;
+
+    // Establish operational connection pipeline
+    connection.start().then(function () {
+    // Invoke the register method context defined in our backend Hub class
+    connection.invoke("JoinRoom", currentUsername, currentRoom).catch(function (err) {
+    return console.error(err.toString());
+    });
+
+    // Adjust interface block visibility layout layers dynamically
+    document.getElementById("joinSection").style.display = "none";
+    document.getElementById("chatSection").style.display = "block";
+    document.getElementById("currentRoomTitle").innerText = currentRoom;
+    }).catch(function (err) {
+    return console.error(err.toString());
+    });
+    });
+
+    // Handle broadcast message action dispatch execution
+    document.getElementById("sendBtn").addEventListener("click", function () {
+    const message = document.getElementById("messageInput").value.trim();
+    if (message) {
+    connection.invoke("SendMessage", currentUsername, message, currentRoom).catch(function (err) {
+    return console.error(err.toString());
+    });
+    document.getElementById("messageInput").value = "";
+    }
+    });
+
+    // Trigger automated proxy action dispatch if user executes Enter key input event
+    document.getElementById("messageInput").addEventListener("keypress", function (e) {
+    if (e.key === 'Enter') {
+    document.getElementById("sendBtn").click();
+    }
+    });
+</script>
